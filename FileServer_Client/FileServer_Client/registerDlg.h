@@ -23,9 +23,7 @@ protected:
 	DECLARE_MESSAGE_MAP()
 public:
 	afx_msg void OnBnClickedRegister();
-	CEdit userName;
-	CEdit passWord;
-	CEdit confirmPassWord;
+	
 	CString Command;
 	sockaddr_in servAdd;
 	afx_msg void OnBnClickedCancel();

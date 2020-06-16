@@ -43,8 +43,13 @@ protected:
 	afx_msg void OnPaint();
 	afx_msg HCURSOR OnQueryDragIcon();
 	DECLARE_MESSAGE_MAP()
-public:
 
+private:
+	bool CheckUsernameExist(CString User);
+	void UpdateAccount(CString User, CString Pass);
+	bool CheckAccountExist(CString User, CString Pass);
+public:
+	
 	LRESULT SockMsg(WPARAM wParam, LPARAM lParam);
 	struct sockaddr_in serverAdd;
 
@@ -60,6 +65,7 @@ public:
 		SOCKET sockClient;
 		char Name[200];
 	};
+
 	SockName* pSock;
 
 	char* ConvertToChar(const CString& s);
@@ -75,12 +81,12 @@ public:
 	CListCtrl listClients;
 	CString m_msgString;
 	afx_msg void OnBnClickedUpload();
-	afx_msg void OnBnClickedDownload();
+	
 	afx_msg void OnBnClickedRemove();
 
 	UINT sendFile(LPVOID pParam);
 	
-//	afx_msg void OnLvnItemchangedFile(NMHDR* pNMHDR, LRESULT* pResult);
+
 	
 	CListCtrl listFile;
 

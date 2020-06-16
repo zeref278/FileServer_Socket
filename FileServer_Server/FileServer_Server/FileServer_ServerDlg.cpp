@@ -78,7 +78,6 @@ BEGIN_MESSAGE_MAP(CFileServerServerDlg, CDialogEx)
 	ON_BN_CLICKED(IDC_BUTTON_STOP, &CFileServerServerDlg::OnBnClickedButtonStop)
 	
 	ON_BN_CLICKED(IDC_UPLOAD, &CFileServerServerDlg::OnBnClickedUpload)
-	ON_BN_CLICKED(IDC_DOWNLOAD, &CFileServerServerDlg::OnBnClickedDownload)
 	ON_BN_CLICKED(IDC_REMOVE, &CFileServerServerDlg::OnBnClickedRemove)
 
 END_MESSAGE_MAP()
@@ -180,6 +179,32 @@ void CFileServerServerDlg::Split(CString src, CString des[2])
 	des[1] = src.Mid(p1 + 2, p2 - (p1 + 2));
 
 }
+void Parse(CString source, CString& User, CString& Pass)
+{
+	/*int found = source.Find(_T(" "), 0);
+	User = source.Mid(0, found);
+
+	Pass = source.Mid(found + 1, source.GetLength()-2 - (found + 1));*/
+	CString demp = (CString)"";
+	int pos = -1;
+
+	for (int i = 0; i < source.GetLength(); i++) {
+		if (source[i] == ' ') {
+			User = demp;
+			pos = i + 1;
+			demp = (CString)"";
+			break;
+		}
+		else {
+			demp += source[i];
+		}
+	}
+	for (int i = pos; i < source.GetLength(); i++) {
+		demp += source[i];
+	}
+	Pass = demp;
+
+}
 void CFileServerServerDlg::mSend(SOCKET sk, CString Command)
 {
 	int Len = Command.GetLength();
@@ -205,6 +230,58 @@ int CFileServerServerDlg::mRecv(SOCKET sk, CString& Command)
 		return -1;
 	return 0;
 
+}
+bool CFileServerServerDlg::CheckUsernameExist(CString User)
+{
+	std::ifstream fileIn("account.txt", std::ios::in);
+	while (!fileIn.eof())
+	{
+		std::string line;
+		std::getline(fileIn, line);
+		size_t found = line.find(" ");
+		if (found != std::string::npos)
+		{
+			std::string user = line.substr(0, found);
+			if (ConvertToChar(User) == user)
+			{
+				fileIn.close();
+				return true;
+			}
+		}
+		
+	}
+	fileIn.close();
+	return false;
+}
+void CFileServerServerDlg::UpdateAccount(CString User, CString Pass)
+{
+	std::ofstream fileIn("account.txt", std::ios::app);
+	fileIn << ConvertToChar(User) << " " << ConvertToChar(Pass)<<std::endl;
+	fileIn.close();
+}
+bool CFileServerServerDlg::CheckAccountExist(CString User, CString Pass)
+{
+	std::ifstream fileIn("account.txt", std::ios::in);
+
+	while (!fileIn.eof())
+	{
+		std::string line;
+		std::getline(fileIn, line);
+		size_t found = line.find(" ");
+		if (found != std::string::npos)
+		{
+			std::string user = line.substr(0, found);
+			std::string pass = line.substr(found + 1);
+			if (ConvertToChar(User) == user && ConvertToChar(Pass) == pass)
+			{
+				fileIn.close();
+				return true;
+			}
+		}
+
+	}
+	fileIn.close();
+	return false;
 }
 LRESULT CFileServerServerDlg::SockMsg(WPARAM wParam, LPARAM lParam)
 {
@@ -244,30 +321,37 @@ LRESULT CFileServerServerDlg::SockMsg(WPARAM wParam, LPARAM lParam)
 		{
 		case 1://Login
 		{
-			int t = 0;
+	
+			CString User, Pass;
+			Parse(strResult[1], User, Pass);
+			int flag1 = 0;
+
 			if (numberSocket > 0)
 			{
 				for (int i = 0; i < numberSocket; i++)
 				{
-					if (strcmp(tem, pSock[i].Name) == 0)//Trung ten user
+					if (strcmp(ConvertToChar(User), pSock[i].Name) == 0)//user da login
 					{
-						t = 1;
+						flag1 = 1;
 						break;
 					}
 				}
 			}
-
-			if (t == 0)
+			if (CheckAccountExist(User, Pass)==true && flag1 == 0)
 			{
-				strcpy(pSock[numberSocket].Name, tem);
+				strcpy(pSock[numberSocket].Name, ConvertToChar(User));
 				Command = _T("1\r\n1\r\n");
-				m_msgString += strResult[1] + _T(" login\r\n");
-				listClients.InsertItem(0, strResult[1]);
+				m_msgString += User + _T(" login\r\n");
+				listClients.InsertItem(0, User);
 				UpdateData(FALSE);
 				numberSocket++;
 			}
 			else
+			{
 				Command = _T("1\r\n0\r\n");
+				m_msgString += User + _T(" can't login\r\n");
+			}
+			
 			mSend(wParam, Command);
 			UpdateData(FALSE);
 			break;
@@ -275,11 +359,25 @@ LRESULT CFileServerServerDlg::SockMsg(WPARAM wParam, LPARAM lParam)
 
 		case 2: //register
 		{
-
+			CString User, Pass;
+			Parse(strResult[1], User, Pass);
+			if (CheckUsernameExist(User))
+			{
+				Command = _T("2\r\n0\r\n");
+			}
+			else
+			{
+				Command = _T("2\r\n1\r\n");
+				m_msgString += User + _T(" register succesfully\r\n");
+				UpdateAccount(User, Pass);
+			}
+			
+			mSend(wParam, Command);
+			UpdateData(FALSE);
 			break;
 		}
 
-		case 3: //
+		case 3: //logout
 		{
 			int post = -1;
 			for (int i = 0; i < numberSocket; i++)
@@ -293,7 +391,7 @@ LRESULT CFileServerServerDlg::SockMsg(WPARAM wParam, LPARAM lParam)
 
 
 			m_msgString += pSock[post].Name;
-			m_msgString += " logout\r\n";
+			m_msgString += _T(" logout\r\n");
 			closesocket(wParam);
 			for (int j = post; j < numberSocket; j++)
 			{
@@ -302,7 +400,6 @@ LRESULT CFileServerServerDlg::SockMsg(WPARAM wParam, LPARAM lParam)
 			}
 			numberSocket--;
 			UpdateData(FALSE);
-			break;
 			break;
 		}
 		case 4: //download file
@@ -318,7 +415,37 @@ LRESULT CFileServerServerDlg::SockMsg(WPARAM wParam, LPARAM lParam)
 	}
 	case FD_CLOSE:
 	{
-		
+		int post = -1;
+		for (int i = 0; i < numberSocket; i++)
+		{
+			if (pSock[i].sockClient == wParam)
+			{
+				if (i < numberSocket)
+					post = i;
+			}
+		}
+
+
+		m_msgString += pSock[post].Name;
+		m_msgString += _T(" logout\r\n");
+		closesocket(wParam);
+		for (int i = 0; i < listClients.GetItemCount(); i++)
+		{
+			CString cs_name(pSock[post].Name);
+			if (cs_name == listClients.GetItemText(i, 0))
+			{
+				listClients.DeleteItem(i);
+				break;
+			}
+		}
+		for (int j = post; j < numberSocket; j++)
+		{
+			pSock[post].sockClient = pSock[post + 1].sockClient;
+			strcpy(pSock[post].Name, pSock[post + 1].Name);
+		}
+		numberSocket--;
+		UpdateData(FALSE);
+		break;
 	}
 	}
 	return 0;
@@ -382,52 +509,6 @@ void CFileServerServerDlg::OnBnClickedUpload()
 }
 
 
-void CFileServerServerDlg::OnBnClickedDownload()
-{
-	// TODO: Add your control notification handler code here
-	//UpdateData(TRUE);
-	//int nItem = 0; //Represents the row number inside CListCtrl
-	//for (nItem = 0; nItem < listFile.GetItemCount();)
-	//{
-	//	BOOL bChecked = listFile.GetCheck(nItem);
-	//	if (bChecked == 1)
-	//	{
-
-	//		{
-	//			std::string line;
-
-	//			std::string delLine = CStringA(listFile.GetItemText(nItem, 0));
-	//			std::ifstream fi;
-	//			fi.open("filePath.txt");
-	//			if (fi)
-	//			{
-	//				std::ofstream fo;
-	//				fo.open("download.txt");
-	//				while (!fi.eof())
-	//				{
-	//					getline(fi, line);
-	//					size_t found = line.find(delLine);
-	//					if (found != std::string::npos)
-	//					{
-	//						file_name = line;
-	//						AfxBeginThread();
-	//					}
-	//				}
-
-	//				fo.close();
-	//				fi.close();
-	//			}
-
-	//		}
-	//	}
-	//	else nItem++;
-	//}
-
-	//UpdateData(FALSE);
-	//if (receiveFile(downloadFileName, PORT))
-	//	MessageBox(_T("Download succeed!"));
-	//else MessageBox(_T("Download failed!"));
-}
 
 
 void CFileServerServerDlg::OnBnClickedRemove()
@@ -498,11 +579,10 @@ UINT CFileServerServerDlg::sendFile(LPVOID pParam)
 		}
 
 		CSocket ServerSocket; //cha
-							  // Tao socket cho server, dang ky port la 1234, giao thuc TCP
+	
 		if (ServerSocket.Create(PORT, SOCK_STREAM, NULL) == 0) //SOCK_STREAM or SOCK_DGRAM.
 		{
-			//cout << "Khoi tao that bai !!!" << endl;
-			//cout << ServerSocket.GetLastError();
+
 			return FALSE;
 		}
 		else

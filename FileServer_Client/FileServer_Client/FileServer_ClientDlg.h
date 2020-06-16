@@ -54,4 +54,6 @@ public:
 
 	CString m_msgString;
 
+	CEdit l_username;
+	CEdit l_pass;
 };

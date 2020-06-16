@@ -31,6 +31,7 @@ void registerDlg::DoDataExchange(CDataExchange* pDX)
 }
 
 BEGIN_MESSAGE_MAP(registerDlg, CDialogEx)
+	ON_MESSAGE(WM_SOCKET, SockMsg)
 	ON_BN_CLICKED(IDC_Register, &registerDlg::OnBnClickedRegister)
 	ON_BN_CLICKED(IDC_Cancel, &registerDlg::OnBnClickedCancel)
 END_MESSAGE_MAP()
@@ -134,9 +135,9 @@ void registerDlg::OnBnClickedRegister()
 	CString in_passWord;
 	CString in_confirmPassWord;
 
-	userName.GetWindowText(in_userName);
-	passWord.GetWindowText(in_passWord);
-	confirmPassWord.GetWindowText(in_confirmPassWord);
+	IDC_userName.GetWindowText(in_userName);
+	IDC_passWord.GetWindowText(in_passWord);
+	IDC_confirmPassWord.GetWindowText(in_confirmPassWord);
 
 	CString IP = _T("127.0.0.1");
 

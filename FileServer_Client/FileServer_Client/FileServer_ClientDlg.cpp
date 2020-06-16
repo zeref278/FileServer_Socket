@@ -42,6 +42,8 @@ CAboutDlg::CAboutDlg() : CDialogEx(IDD_ABOUTBOX)
 void CFileServerClientDlg::DoDataExchange(CDataExchange* pDX)
 {
 	CDialogEx::DoDataExchange(pDX);
+	DDX_Control(pDX, IDC_USERNAME, l_username);
+	DDX_Control(pDX, IDC_PASS, l_pass);
 }
 
 
@@ -72,6 +74,8 @@ BEGIN_MESSAGE_MAP(CFileServerClientDlg, CDialogEx)
 	ON_WM_SYSCOMMAND()
 	ON_WM_PAINT()
 	ON_WM_QUERYDRAGICON()
+	ON_MESSAGE(WM_SOCKET, SockMsg)
+	
 	ON_BN_CLICKED(IDC_BUTTON_LOGIN, &CFileServerClientDlg::OnBnClickedButtonLogin)
 	ON_BN_CLICKED(IDC_BUTTON_REGISTER, &CFileServerClientDlg::OnBnClickedButtonRegister)
 END_MESSAGE_MAP()
@@ -109,7 +113,8 @@ BOOL CFileServerClientDlg::OnInitDialog()
 	SetIcon(m_hIcon, FALSE);		// Set small icon
 
 	// TODO: Add extra initialization here
-
+	IP = ("127.0.0.1");
+	UpdateData(FALSE);
 	return TRUE;  // return TRUE  unless you set the focus to a control
 }
 
@@ -257,14 +262,15 @@ LRESULT CFileServerClientDlg::SockMsg(WPARAM wParam, LPARAM lParam)
 }
 void CFileServerClientDlg::OnBnClickedButtonLogin()
 {
-	UpdateData(true);
+	UpdateData(TRUE);
 
+	l_username.GetWindowText(_UserName);
+	l_pass.GetWindowText(_PassWord);
 	if (_UserName == "" || _PassWord == "")
 	{
 		MessageBox(_T("Username and password are required"));
 		return;
 	}
-
 	sClient = socket(AF_INET, SOCK_STREAM, 0);
 	hostent* host = NULL;
 	if (sClient == INVALID_SOCKET)
@@ -281,6 +287,7 @@ void CFileServerClientDlg::OnBnClickedButtonLogin()
 
 	CStringA cpy_IP(IP);
 
+
 	if (servAdd.sin_addr.s_addr == INADDR_NONE)
 	{
 		host = (gethostbyname(cpy_IP));
@@ -290,9 +297,9 @@ void CFileServerClientDlg::OnBnClickedButtonLogin()
 		}
 		CopyMemory(&servAdd.sin_addr, host->h_addr_list[0],
 			host->h_length);
+		
 		return;
 	}
-
 	int err = connect(sClient, (struct sockaddr*)&servAdd, sizeof(servAdd));
 	if (err == SOCKET_ERROR) {
 		MessageBox(_T("Connect fail"), _T("ERROR"), 0);
@@ -302,7 +309,9 @@ void CFileServerClientDlg::OnBnClickedButtonLogin()
 	Command = _T("1\r\n");
 	Command += _UserName + _T(" ") + _PassWord + _T("\r\n");
 
+
 	mSend(Command); //Gui thong tin username + password ve cho server
+
 	m_msgString = _UserName;
 	WSAAsyncSelect(sClient, m_hWnd, WM_SOCKET, FD_READ | FD_CLOSE);
 	UpdateData(FALSE);
