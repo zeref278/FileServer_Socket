@@ -11,8 +11,8 @@
 
 IMPLEMENT_DYNAMIC(main, CDialogEx)
 
-main::main(CWnd* pParent /*=nullptr*/)
-	: CDialogEx(IDD_DIALOG1, pParent)
+main::main(SOCKET s, CString , CWnd* pParent /*=nullptr*/)
+	: CDialogEx(IDD_MAIN, pParent)
 {
 
 }
@@ -24,6 +24,7 @@ main::~main()
 void main::DoDataExchange(CDataExchange* pDX)
 {
 	CDialogEx::DoDataExchange(pDX);
+
 }
 
 

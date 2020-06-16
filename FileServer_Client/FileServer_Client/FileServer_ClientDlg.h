@@ -5,6 +5,10 @@
 #pragma once
 
 
+#include "registerDlg.h"
+#define PORT 25000
+#define WM_SOCKET WM_USER+2
+
 // CFileServerClientDlg dialog
 class CFileServerClientDlg : public CDialogEx
 {
@@ -32,5 +36,22 @@ protected:
 	afx_msg HCURSOR OnQueryDragIcon();
 	DECLARE_MESSAGE_MAP()
 public:
-	afx_msg void OnEnChangeEdit2();
+	afx_msg void OnBnClickedButtonLogin();
+	afx_msg void OnBnClickedButtonRegister();
+	CString _UserName;
+	CString _PassWord;
+	SOCKET sClient;
+	CString IP;
+	LRESULT SockMsg(WPARAM wParam, LPARAM lParam);
+	char* ConvertToChar(const CString& s);
+	void Split(CString src, CString des[2]);
+	void mSend(CString Command);
+	int mRecv(CString& Command);
+	int buffLength;
+	sockaddr_in servAdd;
+	CString Command;
+	CString strResult[2];
+
+	CString m_msgString;
+
 };
