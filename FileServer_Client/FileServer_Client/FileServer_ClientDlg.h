@@ -56,4 +56,7 @@ public:
 
 	CEdit l_username;
 	CEdit l_pass;
+	CEdit IPA;
+	CIPAddressCtrl IPADDRESS_IN;
+	afx_msg void OnIpnFieldchangedIpaddress(NMHDR* pNMHDR, LRESULT* pResult);
 };

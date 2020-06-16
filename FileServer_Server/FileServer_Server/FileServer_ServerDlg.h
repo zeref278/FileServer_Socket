@@ -61,7 +61,6 @@ public:
 
 	struct SockName 
 	{
-
 		SOCKET sockClient;
 		char Name[200];
 	};

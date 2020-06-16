@@ -44,6 +44,7 @@ void CFileServerClientDlg::DoDataExchange(CDataExchange* pDX)
 	CDialogEx::DoDataExchange(pDX);
 	DDX_Control(pDX, IDC_USERNAME, l_username);
 	DDX_Control(pDX, IDC_PASS, l_pass);
+	DDX_Control(pDX, IDC_IPADDRESS, IPADDRESS_IN);
 }
 
 
@@ -78,6 +79,7 @@ BEGIN_MESSAGE_MAP(CFileServerClientDlg, CDialogEx)
 	
 	ON_BN_CLICKED(IDC_BUTTON_LOGIN, &CFileServerClientDlg::OnBnClickedButtonLogin)
 	ON_BN_CLICKED(IDC_BUTTON_REGISTER, &CFileServerClientDlg::OnBnClickedButtonRegister)
+	ON_NOTIFY(IPN_FIELDCHANGED, IDC_IPADDRESS, &CFileServerClientDlg::OnIpnFieldchangedIpaddress)
 END_MESSAGE_MAP()
 
 
@@ -260,12 +262,29 @@ LRESULT CFileServerClientDlg::SockMsg(WPARAM wParam, LPARAM lParam)
 	}
 	return 0;
 }
+
 void CFileServerClientDlg::OnBnClickedButtonLogin()
 {
 	UpdateData(TRUE);
 
 	l_username.GetWindowText(_UserName);
 	l_pass.GetWindowText(_PassWord);
+	
+	BYTE IPPart1,
+		IPPart2,
+		IPPart3,
+		IPPart4;
+
+	IPADDRESS_IN.GetAddress(IPPart1, IPPart2, IPPart3, IPPart4);
+	if (IPPart1 != 0 && IPPart2 != 0 && IPPart3 != 0 && IPPart4 != 0)
+	{
+		CString p1((LPCSTR)&IPPart1, sizeof(IPPart1));
+		CString p2((LPCSTR)&IPPart2, sizeof(IPPart2));
+		CString p3((LPCSTR)&IPPart3, sizeof(IPPart3));
+		CString p4((LPCSTR)&IPPart4, sizeof(IPPart4));
+		IP = p1 + CString(".") + p2 + CString(".") + p3 + CString(".") + p4;
+	}
+
 	if (_UserName == "" || _PassWord == "")
 	{
 		MessageBox(_T("Username and password are required"));
@@ -326,3 +345,11 @@ void CFileServerClientDlg::OnBnClickedButtonRegister()
 }
 
 
+
+
+void CFileServerClientDlg::OnIpnFieldchangedIpaddress(NMHDR* pNMHDR, LRESULT* pResult)
+{
+	LPNMIPADDRESS pIPAddr = reinterpret_cast<LPNMIPADDRESS>(pNMHDR);
+	// TODO: Add your control notification handler code here
+	*pResult = 0;
+}
