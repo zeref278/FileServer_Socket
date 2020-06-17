@@ -1,17 +1,15 @@
-﻿#pragma once
+#pragma once
 
 
-// main dialog
+// mainDlg dialog
 #define WM_SOCKET WM_USER+2
-
-class main : public CDialogEx
+class mainDlg : public CDialog
 {
-	DECLARE_DYNAMIC(main)
+	DECLARE_DYNAMIC(mainDlg)
 
 public:
-	main(SOCKET s, CString , CWnd* pParent = nullptr);   // standard constructor
-
-	virtual ~main();
+	mainDlg(SOCKET s, CString name, CWnd* pParent = nullptr);   // standard constructor
+	virtual ~mainDlg();
 	CString m_msgString;
 	SOCKET sClient;
 // Dialog Data
@@ -24,8 +22,6 @@ protected:
 
 	DECLARE_MESSAGE_MAP()
 public:
-	afx_msg void OnEnChangeEditUser();
-
 	LRESULT SockMsg(WPARAM wParam, LPARAM lParam);
 	char* ConvertToChar(const CString& s);
 	void Split(CString src, CString des[2]);
@@ -43,7 +39,7 @@ public:
 	afx_msg void OnBnClickedButtonUpload();
 	afx_msg void OnBnClickedButtonDownload();
 	afx_msg void OnBnClickedButtonLogout();
-
+	void mainDlg::OnEnChangeEditUser();
 	void Refresh();
 	UINT sendFile(LPVOID pParam);
 };

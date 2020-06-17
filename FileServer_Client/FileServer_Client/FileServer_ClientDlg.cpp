@@ -8,6 +8,7 @@
 #include "FileServer_ClientDlg.h"
 #include "afxdialogex.h"
 #include "main.h"
+#include "afxcmn.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -314,8 +315,7 @@ void CFileServerClientDlg::OnBnClickedButtonLogin()
 		{
 			MessageBox(_T("Can not connect to server."), _T("ERROR"), 0);
 		}
-		CopyMemory(&servAdd.sin_addr, host->h_addr_list[0],
-			host->h_length);
+		CopyMemory(&servAdd.sin_addr, host->h_addr_list[0], host->h_length);
 		
 		return;
 	}
@@ -336,16 +336,11 @@ void CFileServerClientDlg::OnBnClickedButtonLogin()
 	UpdateData(FALSE);
 }
 
-
-
 void CFileServerClientDlg::OnBnClickedButtonRegister()
 {
 	registerDlg t;
 	t.DoModal();
 }
-
-
-
 
 void CFileServerClientDlg::OnIpnFieldchangedIpaddress(NMHDR* pNMHDR, LRESULT* pResult)
 {

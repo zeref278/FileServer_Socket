@@ -13,6 +13,7 @@
 #endif
 
 std::string file_name;
+using namespace std;
 // CAboutDlg dialog used for App About
 
 class CAboutDlg : public CDialogEx
@@ -389,16 +390,18 @@ LRESULT CFileServerServerDlg::SockMsg(WPARAM wParam, LPARAM lParam)
 				}
 			}
 
-
-			m_msgString += pSock[post].Name;
-			m_msgString += _T(" logout\r\n");
-			closesocket(wParam);
-			for (int j = post; j < numberSocket; j++)
+			if (post != -1)
 			{
-				pSock[post].sockClient = pSock[post + 1].sockClient;
-				strcpy(pSock[post].Name, pSock[post + 1].Name);
+				m_msgString += pSock[post].Name;
+				m_msgString += _T(" logout\r\n");
+				closesocket(wParam);
+				for (int j = post; j < numberSocket; j++)
+				{
+					pSock[post].sockClient = pSock[post + 1].sockClient;
+					strcpy(pSock[post].Name, pSock[post + 1].Name);
+				}
+				numberSocket--;
 			}
-			numberSocket--;
 			UpdateData(FALSE);
 			break;
 		}
@@ -408,6 +411,15 @@ LRESULT CFileServerServerDlg::SockMsg(WPARAM wParam, LPARAM lParam)
 		}
 		case 5: //refresh file
 		{
+			for (int i = 0; i < listFile.GetItemCount(); i++) {
+				CString demp = listFile.GetItemText(i, 0);
+				Command = _T("3\r\n") + demp + _T("\r\n");
+				mSend(wParam, Command);
+				MessageBox(Command);
+			}
+			//CA2T str((to_string(number_Socket)+"- Update\r\n").c_str()) ;
+			//m_msgString += str ;
+			UpdateData(FALSE);
 			break;
 		}
 		}
@@ -460,8 +472,6 @@ char* CFileServerServerDlg::ConvertToChar(const CString& s)
 	return pAnsiString;
 }
 
-
-
 void CFileServerServerDlg::OnBnClickedButtonStart()
 {
 	// TODO: Add your control notification handler code here
@@ -479,18 +489,17 @@ void CFileServerServerDlg::OnBnClickedButtonStart()
 	numberSocket = 0;
 	pSock = new SockName[200];
 
-	
+	m_msgString += (_T("Sever was started\r\n"));
+	UpdateData(0);
+	fstream f("account.txt", ios::app);
+	f.close();
 }
-
 
 void CFileServerServerDlg::OnBnClickedButtonStop()
 {
 	// TODO: Add your control notification handler code here
 	OnCancel();
 }
-
-
-
 
 void CFileServerServerDlg::OnBnClickedUpload()
 {
@@ -507,9 +516,6 @@ void CFileServerServerDlg::OnBnClickedUpload()
 
 	}
 }
-
-
-
 
 void CFileServerServerDlg::OnBnClickedRemove()
 {

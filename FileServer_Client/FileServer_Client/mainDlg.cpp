@@ -1,65 +1,53 @@
-﻿// main.cpp : implementation file
+﻿// mainDlg.cpp : implementation file
 //
 
 #include "pch.h"
 #include "FileServer_Client.h"
-#include "main.h"
+#include "mainDlg.h"
 #include "afxdialogex.h"
 #include <string>	
 #include <fstream>
-using namespace std;
+
 #define RECV_BUFFER_SIZE 10000
 #define SEND_BUFFER_SIZE 10000
 #define PORT 25000
-// main dialog
+using namespace std;
+// mainDlg dialog
 
-IMPLEMENT_DYNAMIC(main, CDialogEx)
+IMPLEMENT_DYNAMIC(mainDlg, CDialog)
 
-main::main(SOCKET s, CString name , CWnd* pParent /*=nullptr*/)
-	: CDialogEx(IDD_MAIN, pParent)
+mainDlg::mainDlg(SOCKET s, CString name, CWnd* pParent /*=nullptr*/)
+	: CDialog(IDD_MAIN, pParent)
 {
 	sClient = s;
-
-	m_msgString = _T("You are logging in as username: ") + name;
-
-	ListView_SetExtendedListViewStyle
-	(ListFile_Client.m_hWnd, LVS_EX_CHECKBOXES | LVS_EX_FULLROWSELECT);
-	Command = _T("5\r\n");
-	mSend(Command); //Gửi socketMsg yêu cầu Refresh 
 }
 
-main::~main()
+mainDlg::~mainDlg()
 {
 }
 
-void main::DoDataExchange(CDataExchange* pDX)
+void mainDlg::DoDataExchange(CDataExchange* pDX)
 {
-	CDialogEx::DoDataExchange(pDX);
-	DDX_Text(pDX, IDC_EDIT_USER, m_msgString);
-	DDX_Control(pDX, IDC_FIlE, ListFile_Client);
-	DDX_Control(pDX, IDC_BUTTON_UPLOAD, BUTTON_UPLOAD);
-	DDX_Control(pDX, IDC_BUTTON_DOWNLOAD, BUTTON_DOWNLOAD);
-	DDX_Control(pDX, IDC_BUTTON_LOGOUT, BUTTON_LOGOUT);
+	CDialog::DoDataExchange(pDX);
 }
 
 
-BEGIN_MESSAGE_MAP(main, CDialogEx)
-
-	ON_EN_CHANGE(IDC_EDIT_USER, &main::OnEnChangeEditUser)
-	ON_BN_CLICKED(IDC_BUTTON_UPLOAD, &main::OnBnClickedButtonUpload)
-	ON_BN_CLICKED(IDC_BUTTON_DOWNLOAD, &main::OnBnClickedButtonDownload)
-	ON_BN_CLICKED(IDC_BUTTON_LOGOUT, &main::OnBnClickedButtonLogout)
+BEGIN_MESSAGE_MAP(mainDlg, CDialog)
 END_MESSAGE_MAP()
 
 
-// main message handlers
-
-void main::OnEnChangeEditUser()
+// mainDlg message handlers
+void mainDlg::OnEnChangeEditUser()
 {
+	// TODO:  If this is a RICHEDIT control, the control will not
+	// send this notification unless you override the CDialogEx::OnInitDialog()
+	// function and call CRichEditCtrl().SetEventMask()
+	// with the ENM_CHANGE flag ORed into the mask.
 
+	// TODO:  Add your control notification handler code here
 }
 
-void main::Split(CString src, CString des[2])
+void mainDlg::Split(CString src, CString des[2])
 {
 	int p1, p2;
 
@@ -71,7 +59,7 @@ void main::Split(CString src, CString des[2])
 
 }
 
-char* main::ConvertToChar(const CString& s)
+char* mainDlg::ConvertToChar(const CString& s)
 {
 	int nSize = s.GetLength();
 	char* pAnsiString = new char[nSize + 1];
@@ -80,7 +68,7 @@ char* main::ConvertToChar(const CString& s)
 	return pAnsiString;
 }
 
-void main::mSend(CString Command)
+void mainDlg::mSend(CString Command)
 {
 	int Len = Command.GetLength();
 	Len += Len;
@@ -92,7 +80,7 @@ void main::mSend(CString Command)
 	delete[] sendBuff;
 }
 
-int main::mRecv(CString& Command)
+int mainDlg::mRecv(CString& Command)
 {
 	PBYTE buffer = new BYTE[1000];
 	memset(buffer, 0, 1000);
@@ -106,7 +94,7 @@ int main::mRecv(CString& Command)
 	return 0;
 }
 
-LRESULT main::SockMsg(WPARAM wParam, LPARAM lParam)
+LRESULT mainDlg::SockMsg(WPARAM wParam, LPARAM lParam)
 {
 
 	if (WSAGETSELECTERROR(lParam))
@@ -141,8 +129,8 @@ LRESULT main::SockMsg(WPARAM wParam, LPARAM lParam)
 				MessageBox(_T("Download succeed!"));
 			else MessageBox(_T("Download failed!"));
 
-			break; 
-		}		
+			break;
+		}
 		}
 	}
 	}
@@ -150,7 +138,7 @@ LRESULT main::SockMsg(WPARAM wParam, LPARAM lParam)
 }
 
 
-bool main::receiveFile(char* file_name, int port)
+bool mainDlg::receiveFile(char* file_name, int port)
 {
 	/*if (!AfxWinInit(::GetModuleHandle(NULL), NULL, ::GetCommandLine(), 0))
 	{
@@ -234,7 +222,8 @@ bool main::receiveFile(char* file_name, int port)
 	return 1;
 }
 
-void main::OnBnClickedButtonUpload()
+
+void mainDlg::OnBnClickedButtonUpload()
 {
 	// TODO: Add your control notification handler code here
 	CFileDialog t(true);
@@ -246,7 +235,7 @@ void main::OnBnClickedButtonUpload()
 	}
 }
 
-void main::OnBnClickedButtonDownload()
+void mainDlg::OnBnClickedButtonDownload()
 {
 	// TODO: Add your control notification handler code here
 	for (int nItem = 0; nItem < ListFile_Client.GetItemCount(); nItem++)
@@ -265,7 +254,7 @@ void main::OnBnClickedButtonDownload()
 	}
 }
 
-void main::OnBnClickedButtonLogout()
+void mainDlg::OnBnClickedButtonLogout()
 {
 	INT_PTR i = MessageBox(_T("Ban muon logout?"), _T("Confirm"), MB_OKCANCEL);
 	if (i == IDCANCEL) return;
@@ -273,18 +262,17 @@ void main::OnBnClickedButtonLogout()
 	EndDialog(1);
 }
 
-void main::Refresh()
+void mainDlg::Refresh()
 {
 
-	ListFile_Client.DeleteAllItems();
+	/*ListFile_Client.DeleteAllItems();*/
 	Command = _T("5\r\n");
 	mSend(Command); //Gui thong tin username + password ve cho server
-	MessageBox(Command);
 	WSAAsyncSelect(sClient, m_hWnd, WM_SOCKET, FD_READ | FD_CLOSE);
-	//UpdateData(FALSE);
+	/*UpdateData(FALSE);*/
 }
 
-UINT main::sendFile(LPVOID pParam)
+UINT mainDlg::sendFile(LPVOID pParam)
 {
 	/*if (!AfxWiznInit(::GetModuleHandle(NULL), NULL, ::GetCommandLine(), 0))
 	{
