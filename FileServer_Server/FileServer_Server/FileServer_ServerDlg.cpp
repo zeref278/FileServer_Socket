@@ -350,11 +350,21 @@ LRESULT CFileServerServerDlg::SockMsg(WPARAM wParam, LPARAM lParam)
 			else
 			{
 				Command = _T("1\r\n0\r\n");
-				m_msgString += User + _T(" can't login\r\n");
 			}
 			
 			mSend(wParam, Command);
 			UpdateData(FALSE);
+			if (CheckAccountExist(User, Pass) == true && flag1 == 0)
+			{
+				CString log = _T("9\r\n") + User + _T(" login\r\n");
+
+				for (int i = 0; i < numberSocket - 1; i++)
+				{
+
+					mSend(pSock[i].sockClient, log);
+
+				}
+			}
 			break;
 		}
 
@@ -380,13 +390,13 @@ LRESULT CFileServerServerDlg::SockMsg(WPARAM wParam, LPARAM lParam)
 
 		case 3: //logout
 		{
+			/*UpdateData();
 			int post = -1;
 			for (int i = 0; i < numberSocket; i++)
 			{
 				if (pSock[i].sockClient == wParam)
 				{
-					if (i < numberSocket)
-						post = i;
+					post = i;
 				}
 			}
 
@@ -395,6 +405,15 @@ LRESULT CFileServerServerDlg::SockMsg(WPARAM wParam, LPARAM lParam)
 				m_msgString += pSock[post].Name;
 				m_msgString += _T(" logout\r\n");
 				closesocket(wParam);
+				for (int i = 0; i < listClients.GetItemCount(); i++)
+				{
+					CString cs_name(pSock[post].Name);
+					if (cs_name == listClients.GetItemText(i, 0))
+					{
+						listClients.DeleteItem(i);
+						break;
+					}
+				}
 				for (int j = post; j < numberSocket; j++)
 				{
 					pSock[post].sockClient = pSock[post + 1].sockClient;
@@ -403,7 +422,7 @@ LRESULT CFileServerServerDlg::SockMsg(WPARAM wParam, LPARAM lParam)
 				numberSocket--;
 			}
 			UpdateData(FALSE);
-			break;
+			break;*/
 		}
 		case 4: //download file
 		{
@@ -415,7 +434,7 @@ LRESULT CFileServerServerDlg::SockMsg(WPARAM wParam, LPARAM lParam)
 				CString demp = listFile.GetItemText(i, 0);
 				Command = _T("3\r\n") + demp + _T("\r\n");
 				mSend(wParam, Command);
-				MessageBox(Command);
+
 			}
 			//CA2T str((to_string(number_Socket)+"- Update\r\n").c_str()) ;
 			//m_msgString += str ;
@@ -427,35 +446,37 @@ LRESULT CFileServerServerDlg::SockMsg(WPARAM wParam, LPARAM lParam)
 	}
 	case FD_CLOSE:
 	{
+		UpdateData();
 		int post = -1;
 		for (int i = 0; i < numberSocket; i++)
 		{
 			if (pSock[i].sockClient == wParam)
 			{
-				if (i < numberSocket)
-					post = i;
+				post = i;
 			}
 		}
 
-
-		m_msgString += pSock[post].Name;
-		m_msgString += _T(" logout\r\n");
-		closesocket(wParam);
-		for (int i = 0; i < listClients.GetItemCount(); i++)
+		if (post != -1)
 		{
-			CString cs_name(pSock[post].Name);
-			if (cs_name == listClients.GetItemText(i, 0))
+			m_msgString += pSock[post].Name;
+			m_msgString += _T(" logout\r\n");
+			closesocket(wParam);
+			for (int i = 0; i < listClients.GetItemCount(); i++)
 			{
-				listClients.DeleteItem(i);
-				break;
+				CString cs_name(pSock[post].Name);
+				if (cs_name == listClients.GetItemText(i, 0))
+				{
+					listClients.DeleteItem(i);
+					break;
+				}
 			}
+			for (int j = post; j < numberSocket; j++)
+			{
+				pSock[post].sockClient = pSock[post + 1].sockClient;
+				strcpy(pSock[post].Name, pSock[post + 1].Name);
+			}
+			numberSocket--;
 		}
-		for (int j = post; j < numberSocket; j++)
-		{
-			pSock[post].sockClient = pSock[post + 1].sockClient;
-			strcpy(pSock[post].Name, pSock[post + 1].Name);
-		}
-		numberSocket--;
 		UpdateData(FALSE);
 		break;
 	}
@@ -498,6 +519,13 @@ void CFileServerServerDlg::OnBnClickedButtonStart()
 void CFileServerServerDlg::OnBnClickedButtonStop()
 {
 	// TODO: Add your control notification handler code here
+	
+	for (int i = 0; i < numberSocket; i++)
+	{
+		closesocket(pSock[i].sockClient);
+	}
+	delete[] pSock;
+	closesocket(sockServer);
 	OnCancel();
 }
 

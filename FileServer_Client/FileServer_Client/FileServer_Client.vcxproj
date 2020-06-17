@@ -187,7 +187,6 @@
     <ClInclude Include="FileServer_ClientDlg.h" />
     <ClInclude Include="framework.h" />
     <ClInclude Include="main.h" />
-    <ClInclude Include="mainDlg.h" />
     <ClInclude Include="pch.h" />
     <ClInclude Include="registerDlg.h" />
     <ClInclude Include="Resource.h" />
@@ -198,7 +197,6 @@
     <ClCompile Include="FileServer_Client.cpp" />
     <ClCompile Include="FileServer_ClientDlg.cpp" />
     <ClCompile Include="main.cpp" />
-    <ClCompile Include="mainDlg.cpp" />
     <ClCompile Include="pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>

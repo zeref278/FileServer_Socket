@@ -7,6 +7,7 @@
 #include "afxdialogex.h"
 #include <string>	
 #include <fstream>
+#include "FileServer_ClientDlg.h"
 using namespace std;
 #define RECV_BUFFER_SIZE 10000
 #define SEND_BUFFER_SIZE 10000
@@ -15,17 +16,21 @@ using namespace std;
 
 IMPLEMENT_DYNAMIC(main, CDialogEx)
 
-main::main(SOCKET s, CString name , CWnd* pParent /*=nullptr*/)
+main::main(SOCKET &s, CString name , CWnd* pParent /*=nullptr*/)
 	: CDialogEx(IDD_MAIN, pParent)
+	, m_log(_T(""))
 {
+	
 	sClient = s;
 
 	m_msgString = _T("You are logging in as username: ") + name;
-
+	
 	ListView_SetExtendedListViewStyle
 	(ListFile_Client.m_hWnd, LVS_EX_CHECKBOXES | LVS_EX_FULLROWSELECT);
 	Command = _T("5\r\n");
 	mSend(Command); //Gửi socketMsg yêu cầu Refresh 
+	
+	
 }
 
 main::~main()
@@ -35,16 +40,20 @@ main::~main()
 void main::DoDataExchange(CDataExchange* pDX)
 {
 	CDialogEx::DoDataExchange(pDX);
+
 	DDX_Text(pDX, IDC_EDIT_USER, m_msgString);
 	DDX_Control(pDX, IDC_FIlE, ListFile_Client);
 	DDX_Control(pDX, IDC_BUTTON_UPLOAD, BUTTON_UPLOAD);
 	DDX_Control(pDX, IDC_BUTTON_DOWNLOAD, BUTTON_DOWNLOAD);
 	DDX_Control(pDX, IDC_BUTTON_LOGOUT, BUTTON_LOGOUT);
+	DDX_Text(pDX, IDC_LOG, m_log);
+
+	WSAAsyncSelect(sClient, m_hWnd, WM_SOCKET, FD_READ | FD_CLOSE);
 }
 
 
 BEGIN_MESSAGE_MAP(main, CDialogEx)
-
+	ON_MESSAGE(WM_SOCKET,SockMsg)
 	ON_EN_CHANGE(IDC_EDIT_USER, &main::OnEnChangeEditUser)
 	ON_BN_CLICKED(IDC_BUTTON_UPLOAD, &main::OnBnClickedButtonUpload)
 	ON_BN_CLICKED(IDC_BUTTON_DOWNLOAD, &main::OnBnClickedButtonDownload)
@@ -130,6 +139,7 @@ LRESULT main::SockMsg(WPARAM wParam, LPARAM lParam)
 		case 3: //Refresh
 		{
 			ListFile_Client.InsertItem(0, strResult[1]);
+			UpdateData(FALSE);
 			break;
 		}
 		case 4: //receive file from server
@@ -143,6 +153,14 @@ LRESULT main::SockMsg(WPARAM wParam, LPARAM lParam)
 
 			break; 
 		}		
+		case 9:
+		{
+			m_log += strResult[1];
+			
+			UpdateData(FALSE);
+
+			break;
+		}
 		}
 	}
 	}
@@ -271,6 +289,7 @@ void main::OnBnClickedButtonLogout()
 	if (i == IDCANCEL) return;
 	closesocket(sClient);
 	EndDialog(1);
+	
 }
 
 void main::Refresh()

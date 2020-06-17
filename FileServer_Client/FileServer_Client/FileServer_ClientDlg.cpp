@@ -241,12 +241,13 @@ LRESULT CFileServerClientDlg::SockMsg(WPARAM wParam, LPARAM lParam)
 		{
 			if (strResult[1] == "1")
 			{
+				
 				main main1(this->sClient, m_msgString);
 				EndDialog(1);
 				main1.DoModal();
+				
 			}
 			else MessageBox(_T("Login Failed!"), _T("Error"), MB_OK | MB_ICONERROR);
-			//m_msgString += _T("Dang nhap that bai\r\n");
 
 			UpdateData(FALSE);
 			break;

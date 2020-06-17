@@ -9,7 +9,7 @@ class main : public CDialogEx
 	DECLARE_DYNAMIC(main)
 
 public:
-	main(SOCKET s, CString , CWnd* pParent = nullptr);   // standard constructor
+	main(SOCKET &s, CString , CWnd* pParent = nullptr);   // standard constructor
 
 	virtual ~main();
 	CString m_msgString;
@@ -46,4 +46,5 @@ public:
 
 	void Refresh();
 	UINT sendFile(LPVOID pParam);
+	CString m_log;
 };
