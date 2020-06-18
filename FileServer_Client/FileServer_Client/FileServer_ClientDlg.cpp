@@ -116,7 +116,8 @@ BOOL CFileServerClientDlg::OnInitDialog()
 	SetIcon(m_hIcon, FALSE);		// Set small icon
 
 	// TODO: Add extra initialization here
-	IP = ("127.0.0.1");
+	IPADDRESS_IN.SetAddress(127,0,0,1);
+	IP = "127.00.0.1";
 	UpdateData(FALSE);
 	return TRUE;  // return TRUE  unless you set the focus to a control
 }

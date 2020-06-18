@@ -290,6 +290,8 @@ void main::OnBnClickedButtonLogout()
 	if (i == IDCANCEL) return;
 	closesocket(sClient);
 	EndDialog(1);
+	CFileServerClientDlg t;
+	t.DoModal();
 	
 }
 
