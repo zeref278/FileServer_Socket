@@ -24,8 +24,7 @@ main::main(SOCKET &s, CString name , CWnd* pParent /*=nullptr*/)
 {
 	sClient = s;
 	m_msgString = _T("You are logging in as username: ") + name;
-	ListView_SetExtendedListViewStyle
-	(ListFile_Client.m_hWnd, LVS_EX_CHECKBOXES | LVS_EX_FULLROWSELECT);
+	
 	Command = _T("5\r\n");
 	mSend(Command); //Gửi socketMsg yêu cầu Refresh 
 	
@@ -48,6 +47,8 @@ void main::DoDataExchange(CDataExchange* pDX)
 	DDX_Text(pDX, IDC_LOG, m_log);
 
 	WSAAsyncSelect(sClient, m_hWnd, WM_SOCKET, FD_READ | FD_CLOSE);
+	/*ListView_SetExtendedListViewStyle
+	(ListFile_Client.m_hWnd, LVS_EX_CHECKBOXES | LVS_EX_FULLROWSELECT);*/
 }
 
 
@@ -152,9 +153,15 @@ LRESULT main::SockMsg(WPARAM wParam, LPARAM lParam)
 
 			break; 
 		}		
-		case 5: //Call refresh
+		case 5: //Server remove file
 		{
-			Refresh();
+			CString fileN(strResult[1]);
+			for (int i = 0; i < ListFile_Client.GetItemCount(); i++)
+			{
+				if (fileN == ListFile_Client.GetItemText(i, 0))
+					ListFile_Client.DeleteItem(i);
+			}
+			UpdateData(FALSE);
 			break;
 		}
 		case 6:
@@ -169,9 +176,9 @@ LRESULT main::SockMsg(WPARAM wParam, LPARAM lParam)
 			AfxBeginThread(sendFile, 0);
 			break;
 		}
-		case 9:
+		case 9:case 10:
 		{
-			m_log += strResult[1];
+			m_log += strResult[1] + _T("\r\n");
 			
 			UpdateData(FALSE);
 
@@ -253,8 +260,7 @@ void main::OnBnClickedButtonUpload()
 		upLoadFileName = t.GetFileName();
 		ListFile_Client.InsertItem(0, t.GetFileName());
 		Command = _T("7\r\n") + upLoadFileName + _T("\r\n");
-		mSend(Command); 
-
+		mSend(Command);
 
 	}
 }

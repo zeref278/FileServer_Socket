@@ -16,7 +16,7 @@
 #define WM_SOCKET WM_USER+1
 #define SEND_BUFFER_SIZE 10000
 #define RECV_BUFFER_SIZE	10000
-
+using namespace std;
 // CFileServerServerDlg dialog
 class CFileServerServerDlg : public CDialogEx
 {
@@ -86,7 +86,7 @@ public:
 	static UINT sendFile(LPVOID pParam);
 
 	
-	
+	string getExePath();
 	
 	CListCtrl listFile;
 

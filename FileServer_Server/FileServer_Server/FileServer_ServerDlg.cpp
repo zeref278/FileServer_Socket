@@ -303,17 +303,7 @@ LRESULT CFileServerServerDlg::SockMsg(WPARAM wParam, LPARAM lParam)
 	}
 	case FD_READ:
 	{
-		int post = -1, dpos = -1;
-
-		for (int i = 0; i < numberSocket; i++)
-		{
-			if (pSock[i].sockClient == wParam)
-			{
-				if (i < numberSocket)
-					post = i;
-			}
-		}
-
+		
 		CString temp;
 		if (mRecv(wParam, temp) < 0)
 			break;
@@ -340,7 +330,7 @@ LRESULT CFileServerServerDlg::SockMsg(WPARAM wParam, LPARAM lParam)
 					}
 				}
 			}
-			if (CheckAccountExist(User, Pass)==true && flag1 == 0)
+			if (CheckAccountExist(User, Pass) == true && flag1 == 0)
 			{
 				strcpy(pSock[numberSocket].Name, ConvertToChar(User));
 				Command = _T("1\r\n1\r\n");
@@ -353,20 +343,22 @@ LRESULT CFileServerServerDlg::SockMsg(WPARAM wParam, LPARAM lParam)
 			{
 				Command = _T("1\r\n0\r\n");
 			}
-			
+
 			mSend(wParam, Command);
 			UpdateData(FALSE);
+
 			if (CheckAccountExist(User, Pass) == true && flag1 == 0)
 			{
 				CString log = _T("9\r\n") + User + _T(" login\r\n");
 
-				for (int i = 0; i < numberSocket - 1; i++)
+				for (int i = 0; i < numberSocket; i++)
 				{
-
-					mSend(pSock[i].sockClient, log);
+					if (pSock[i].sockClient != wParam)
+						mSend(pSock[i].sockClient, log);
 
 				}
 			}
+
 			break;
 		}
 
@@ -442,7 +434,7 @@ LRESULT CFileServerServerDlg::SockMsg(WPARAM wParam, LPARAM lParam)
 			string s_port = to_string(iPort);
 			CString cs_port(s_port.c_str());
 
-			m_msgString += ((CString)pSock[post].Name + _T(" Request download: ") + strResult[1]);
+			m_msgString += ((CString)pSock[post].Name + _T(" download file: ") + strResult[1]);
 			m_msgString += "\r\n";
 
 			UpdateData(FALSE);
@@ -479,6 +471,28 @@ LRESULT CFileServerServerDlg::SockMsg(WPARAM wParam, LPARAM lParam)
 				MessageBox(_T("Failed!"));
 				break;
 			}
+			string path = getExePath() + uploadFileName;
+			ofstream fi("filePath.txt", ios::app);
+			fi << path << endl;
+			
+			fi.close();
+			CString fn(uploadFileName);
+			listFile.InsertItem(0, fn);
+			int pos = -1;
+			for (int i = 0; i < numberSocket; i++)
+			{
+				if (pSock[i].sockClient == wParam)
+				{
+					pos = i;
+				}
+				else
+				{
+					CString log = _T("3\r\n") + fn + _T("\r\n");
+					mSend(pSock[i].sockClient, log);
+				}
+			}
+			m_msgString += (CString)pSock[pos].Name + _T(" upload file: ") + fn + _T("\r\n");
+			UpdateData(FALSE);
 			break;
 		}
 		case 7:
@@ -501,6 +515,7 @@ LRESULT CFileServerServerDlg::SockMsg(WPARAM wParam, LPARAM lParam)
 			if (pSock[i].sockClient == wParam)
 			{
 				post = i;
+				break;
 			}
 		}
 
@@ -508,9 +523,17 @@ LRESULT CFileServerServerDlg::SockMsg(WPARAM wParam, LPARAM lParam)
 		{
 			m_msgString += pSock[post].Name;
 			m_msgString += _T(" logout\r\n");
-			closesocket(wParam);
+
+			CString User;
+			User += pSock[post].Name;
+			CString log = _T("10\r\n") + User + _T(" logout\r\n"); //Gui cho cac clients
+
+
+			CString str;
+
 			for (int i = 0; i < listClients.GetItemCount(); i++)
 			{
+
 				CString cs_name(pSock[post].Name);
 				if (cs_name == listClients.GetItemText(i, 0))
 				{
@@ -518,12 +541,18 @@ LRESULT CFileServerServerDlg::SockMsg(WPARAM wParam, LPARAM lParam)
 					break;
 				}
 			}
-			for (int j = post; j < numberSocket; j++)
+			for (int j = post; j < numberSocket - 1; j++)
 			{
-				pSock[post].sockClient = pSock[post + 1].sockClient;
-				strcpy(pSock[post].Name, pSock[post + 1].Name);
+				pSock[j].sockClient = pSock[j + 1].sockClient;
+				strcpy(pSock[j].Name, pSock[j + 1].Name);
 			}
 			numberSocket--;
+
+			for (int i = 0; i < numberSocket; i++)
+			{
+				mSend(pSock[i].sockClient, log);
+			}
+			closesocket(wParam);
 		}
 		UpdateData(FALSE);
 		break;
@@ -562,6 +591,22 @@ void CFileServerServerDlg::OnBnClickedButtonStart()
 	UpdateData(0);
 	fstream f("account.txt", ios::app);
 	f.close();
+
+	fstream fp("filePath.txt", ios::in|ios::app);
+	while (!fp.eof())
+	{
+		string line;
+		getline(fp, line);
+		if (line != "")
+		{
+			string fileName = getFileName(line);
+			CString temp;
+			temp += fileName.c_str();
+			listFile.InsertItem(0, temp);
+		}
+	}
+	UpdateData(FALSE);
+	fp.close();
 }
 
 void CFileServerServerDlg::OnBnClickedButtonStop()
@@ -590,6 +635,12 @@ void CFileServerServerDlg::OnBnClickedUpload()
 		f << line << std::endl;
 		f.close();
 
+		for (int i = 0; i < numberSocket; i++)
+		{
+			
+			CString log = _T("3\r\n") + t.GetFileName() + _T("\r\n");
+			mSend(pSock[i].sockClient, log);
+		}
 	}
 }
 
@@ -611,6 +662,13 @@ void CFileServerServerDlg::OnBnClickedRemove()
 				std::string line;
 
 				std::string delLine = CStringA(listFile.GetItemText(nItem, 0));
+
+				for (int i = 0; i < numberSocket; i++)
+				{
+					CString log = _T("5\r\n") + listFile.GetItemText(nItem, 0) + _T("\r\n");
+					mSend(pSock[i].sockClient, log);
+				}
+
 				listFile.DeleteItem(nItem);
 				std::ifstream fi;
 
@@ -744,6 +802,17 @@ UINT CFileServerServerDlg::sendFile(LPVOID pParam)
 		ServerSocket.Close();
 	}
 	return 1;
+}
+
+string CFileServerServerDlg::getExePath()
+{
+	
+	LPWSTR buff11 = new WCHAR[MAX_PATH];
+	GetModuleFileNameW(NULL, buff11, MAX_PATH);
+	string path = CW2A(buff11);
+	delete[] buff11;
+	string::size_type pos = path.find_last_of("\\/");
+	return path.substr(0,pos+1);
 }
 
 string getFilePath(string s)
