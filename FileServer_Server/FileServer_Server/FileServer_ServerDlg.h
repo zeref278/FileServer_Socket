@@ -91,6 +91,7 @@ public:
 	CListCtrl listFile;
 
 	char* downloadFileName;
+	char* uploadFileName;
 	bool receiveFile(char*, int);
 };
 std::string getFilePath(std::string);

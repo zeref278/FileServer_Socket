@@ -35,6 +35,7 @@ public:
 	int	buffLength;
 	char* downloadFileName;
 	CString Command;
+	CString upLoadFileName;
 	CString strResult[2];
 	CListCtrl ListFile_Client;
 	CButton BUTTON_UPLOAD;
@@ -45,6 +46,6 @@ public:
 	afx_msg void OnBnClickedButtonLogout();
 
 	void Refresh();
-	UINT sendFile(LPVOID pParam);
+	static UINT sendFile(LPVOID pParam);
 	CString m_log;
 };

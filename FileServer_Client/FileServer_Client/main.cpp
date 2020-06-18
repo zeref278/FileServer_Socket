@@ -12,6 +12,8 @@ using namespace std;
 #define RECV_BUFFER_SIZE 10000
 #define SEND_BUFFER_SIZE 10000
 #define PORT 25000
+
+int icPort = 30000;
 // main dialog
 
 IMPLEMENT_DYNAMIC(main, CDialogEx)
@@ -155,6 +157,18 @@ LRESULT main::SockMsg(WPARAM wParam, LPARAM lParam)
 			Refresh();
 			break;
 		}
+		case 6:
+		{
+			icPort++;
+			string s_port = to_string(icPort);
+			CString cs_port(s_port.c_str());
+
+			UpdateData(FALSE);
+			Command = _T("6\r\n") + cs_port + _T("\r\n");
+			mSend(Command);
+			AfxBeginThread(sendFile, 0);
+			break;
+		}
 		case 9:
 		{
 			m_log += strResult[1];
@@ -224,7 +238,7 @@ bool main::receiveFile(char* file_name, int port)
 			if (buffer) delete[] buffer;
 			fclose(fo);
 		}
-		
+	
 		ClientSocket.Close();
 	
 	return 1;
@@ -236,12 +250,12 @@ void main::OnBnClickedButtonUpload()
 	CFileDialog t(true);
 	if (t.DoModal() == IDOK)
 	{
+		upLoadFileName = t.GetFileName();
 		ListFile_Client.InsertItem(0, t.GetFileName());
-		Command = _T("6\r\n") + t.GetFileName() + _T("\r\n");
-		mSend(Command);
-		//gửi thông điệp + IP client
-		//tạo socket
-		//gửi file 
+		Command = _T("7\r\n") + upLoadFileName + _T("\r\n");
+		mSend(Command); 
+
+
 	}
 }
 
@@ -286,12 +300,7 @@ void main::Refresh()
 
 UINT main::sendFile(LPVOID pParam)
 {
-	/*if (!AfxWiznInit(::GetModuleHandle(NULL), NULL, ::GetCommandLine(), 0))
-	{
-		// TODO: change error code to suit your needs
-		_tprintf(_T("Fatal Error: MFC initialization failed\n"));
-	}
-	else*/
+	
 	{
 		// TODO: code your application's behavior here.
 
@@ -304,7 +313,7 @@ UINT main::sendFile(LPVOID pParam)
 
 		CSocket ServerSocket; //cha
 
-		if (ServerSocket.Create(PORT, SOCK_STREAM, NULL) == 0) //SOCK_STREAM or SOCK_DGRAM.
+		if (ServerSocket.Create(icPort, SOCK_STREAM, NULL) == 0) //SOCK_STREAM or SOCK_DGRAM.
 		{
 
 			return FALSE;

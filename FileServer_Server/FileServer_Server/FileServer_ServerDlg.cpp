@@ -426,7 +426,7 @@ LRESULT CFileServerServerDlg::SockMsg(WPARAM wParam, LPARAM lParam)
 			UpdateData(FALSE);
 			break;*/
 		}
-		case 4: //download file
+		case 4: //Client download file
 		{
 			int post = -1;
 			for (int i = 0; i < numberSocket; i++)
@@ -474,9 +474,21 @@ LRESULT CFileServerServerDlg::SockMsg(WPARAM wParam, LPARAM lParam)
 			char* c_port = ConvertToChar(strResult[1]);
 			int iPort = atoi(c_port);
 			CString cs_port(c_port);
-			if (receiveFile(downloadFileName, iPort))
+			if (receiveFile(uploadFileName, iPort))
+			{
+				MessageBox(_T("Failed!"));
 				break;
+			}
+			break;
 		}
+		case 7:
+		{
+			uploadFileName = ConvertToChar(strResult[1]);
+			Command = _T("6\r\n");
+			mSend(wParam, Command);
+			break;
+		}
+
 		}
 		break;
 	}
@@ -753,21 +765,63 @@ string getFilePath(string s)
 	return "";
 }
 
-bool CFileServerServerDlg::receiveFile(char*, int)
+bool CFileServerServerDlg::receiveFile(char* file_name, int port)
 {
-	UpdateData(TRUE);
-	int nItem = 0; //Represents the row number inside CListCtrl
-	for (nItem = 0; nItem < listFile.GetItemCount();)
+	if (AfxSocketInit() == FALSE)
 	{
-		BOOL bChecked = listFile.GetCheck(nItem);
-		if (bChecked == 1)
-		{
-			
-		}
-		else nItem++;
+		return FALSE;
 	}
+	CSocket ClientSocket;
+	ClientSocket.Create();
 
-	UpdateData(FALSE);
+
+	// Ket noi den Server
+	if (ClientSocket.Connect(_T("127.0.0.1"), port) != 0)
+	{
+
+		int file_size = 0, bytes_recevived, bytes_to_receive;
+		byte* buffer = NULL;
+
+		// Mo file
+		FILE* fo = fopen(file_name, "wb");
+
+		// Nhan kich thuoc file
+		int size = 0;
+		bytes_to_receive = sizeof(file_size);
+		do
+		{
+			size = (file_size)+sizeof(file_size) - bytes_to_receive;
+			bytes_recevived = recv(ClientSocket, (char*)&size, bytes_to_receive, 0);
+
+			if (bytes_recevived == SOCKET_ERROR || bytes_recevived == 0)
+				return 0;
+
+			bytes_to_receive -= bytes_recevived;
+		} while (bytes_to_receive > 0);
+
+		// Nhan file's data
+		buffer = new byte[RECV_BUFFER_SIZE];
+		bytes_to_receive = size;
+
+		do {
+			int buffer_size;
+			buffer_size = (RECV_BUFFER_SIZE > bytes_to_receive) ? bytes_to_receive : RECV_BUFFER_SIZE;
+
+			do {
+				bytes_recevived = recv(ClientSocket, (char*)buffer, buffer_size, 0);
+			} while (bytes_recevived == -1);
+
+			fwrite((char*)buffer, bytes_recevived, 1, fo);
+
+			memset(buffer, 0, RECV_BUFFER_SIZE);
+			bytes_to_receive -= bytes_recevived;
+		} while (bytes_to_receive > 0);
+		if (buffer) delete[] buffer;
+		fclose(fo);
+	}
+	else MessageBox(_T("Không thể kết nối đến server"));
+	ClientSocket.Close();
+
 	return 1;
 }
 
@@ -781,7 +835,6 @@ string getFileName(string s)
 	}
 	return res;
 }
-
 
 //void CFileServerServerDlg::OnLvnItemchangedFile(NMHDR* pNMHDR, LRESULT* pResult)
 //{
