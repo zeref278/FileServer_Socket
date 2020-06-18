@@ -20,14 +20,14 @@ main::main(SOCKET &s, CString name , CWnd* pParent /*=nullptr*/)
 	: CDialogEx(IDD_MAIN, pParent)
 	, m_log(_T(""))
 {
-	
 	sClient = s;
-
 	m_msgString = _T("You are logging in as username: ") + name;
-	
-
+	ListView_SetExtendedListViewStyle
+	(ListFile_Client.m_hWnd, LVS_EX_CHECKBOXES | LVS_EX_FULLROWSELECT);
 	Command = _T("5\r\n");
-	mSend(Command);
+	mSend(Command); //Gửi socketMsg yêu cầu Refresh 
+	
+	
 }
 
 main::~main()
@@ -46,8 +46,6 @@ void main::DoDataExchange(CDataExchange* pDX)
 	DDX_Text(pDX, IDC_LOG, m_log);
 
 	WSAAsyncSelect(sClient, m_hWnd, WM_SOCKET, FD_READ | FD_CLOSE);
-	ListView_SetExtendedListViewStyle
-	(ListFile_Client.m_hWnd, LVS_EX_CHECKBOXES | LVS_EX_FULLROWSELECT);
 }
 
 
@@ -129,6 +127,7 @@ LRESULT main::SockMsg(WPARAM wParam, LPARAM lParam)
 		CString temp;
 		if (mRecv(temp) < 0)
 			break;
+
 		Split(temp, strResult);
 		int flag1 = _ttoi(strResult[0]);
 
@@ -136,16 +135,15 @@ LRESULT main::SockMsg(WPARAM wParam, LPARAM lParam)
 		{
 		case 3: //Refresh
 		{
+
 			ListFile_Client.InsertItem(0, strResult[1]);
 			UpdateData(FALSE);
 			break;
 		}
 		case 4: //receive file from server
-		{	
-			MessageBox(fileName);
+		{	//char* fileName = ConvertToChar(strResult[1]);
 			char* c_port = ConvertToChar(strResult[1]);
 			int iPort = atoi(c_port);
-			CString cs_port(c_port);
 			if (receiveFile(downloadFileName, iPort))
 				MessageBox(_T("Download succeed!"));
 			else MessageBox(_T("Download failed!"));
@@ -157,14 +155,12 @@ LRESULT main::SockMsg(WPARAM wParam, LPARAM lParam)
 			Refresh();
 			break;
 		}
-		case 6:	// Send file to server 
-		{
-			break;
-		}
 		case 9:
 		{
 			m_log += strResult[1];
+			
 			UpdateData(FALSE);
+
 			break;
 		}
 		}
@@ -173,31 +169,21 @@ LRESULT main::SockMsg(WPARAM wParam, LPARAM lParam)
 	return 0;
 }
 
+
 bool main::receiveFile(char* file_name, int port)
 {
-	
-	{
-		// TODO: code your application's behavior here.
-
-		// Khoi tao Thu vien
 		if (AfxSocketInit() == FALSE)
 		{
-			//cout << "Khong the khoi tao Socket Libraray";
 			return FALSE;
 		}
-
-		// Tao socket dau tien
 		CSocket ClientSocket;
 		ClientSocket.Create();
+
 
 		// Ket noi den Server
 		if (ClientSocket.Connect(_T("127.0.0.1"), port) != 0)
 		{
-			//cout << "Ket noi toi Server thanh cong !!!" << endl << endl;
-			///-------------------------------------------------------------------------------
-			/// Tham so truyen vao: char* file_name, CSocket ClientSocket
-			///-----------------------------------------------------------------------------------
-			// Khai bao
+
 			int file_size = 0, bytes_recevived, bytes_to_receive;
 			byte* buffer = NULL;
 
@@ -235,20 +221,12 @@ bool main::receiveFile(char* file_name, int port)
 				memset(buffer, 0, RECV_BUFFER_SIZE);
 				bytes_to_receive -= bytes_recevived;
 			} while (bytes_to_receive > 0);
-
 			if (buffer) delete[] buffer;
 			fclose(fo);
-			///-------------------------------------------------------------------------------
 		}
-		else
-		{
-			MessageBox(_T("Không thể kết nối đến server!"));
-			return FALSE;
-		}
-
-		// Dong ket noi
+		
 		ClientSocket.Close();
-	}
+	
 	return 1;
 }
 
@@ -272,17 +250,16 @@ void main::OnBnClickedButtonDownload()
 	// TODO: Add your control notification handler code here
 	for (int nItem = 0; nItem < ListFile_Client.GetItemCount(); nItem++)
 	{
-		
-		if (ListFile_Client.GetCheck(nItem))
+		if (ListFile_Client.GetItemState(nItem, LVIS_SELECTED) == LVIS_SELECTED)
 		{
-			fileName = ListFile_Client.GetItemText(nItem, 0);
+			CString fileName = ListFile_Client.GetItemText(nItem, 0);
 			CString cs = _T("You have downloaded file: ");
 			downloadFileName = ConvertToChar(fileName);
 			cs += fileName;
 			Command = _T("4\r\n") + fileName + _T("\r\n");
 			mSend(Command);
 			WSAAsyncSelect(sClient, m_hWnd, WM_SOCKET, FD_READ | FD_CLOSE);
-			/*MessageBox(cs);*/
+			MessageBox(cs);
 		}
 	}
 }
@@ -292,14 +269,17 @@ void main::OnBnClickedButtonLogout()
 	INT_PTR i = MessageBox(_T("Ban muon logout?"), _T("Confirm"), MB_OKCANCEL);
 	if (i == IDCANCEL) return;
 	closesocket(sClient);
-	EndDialog(1);	
+	EndDialog(1);
+	
 }
 
 void main::Refresh()
 {
+
 	ListFile_Client.DeleteAllItems();
 	Command = _T("5\r\n");
-	mSend(Command); //Gửi yêu cầu refresh cho server
+	mSend(Command); //Gui thong tin username + password ve cho server
+	MessageBox(Command);
 	WSAAsyncSelect(sClient, m_hWnd, WM_SOCKET, FD_READ | FD_CLOSE);
 	UpdateData(FALSE);
 }
@@ -408,3 +388,4 @@ UINT main::sendFile(LPVOID pParam)
 	return 1;
 	return 0;
 }
+

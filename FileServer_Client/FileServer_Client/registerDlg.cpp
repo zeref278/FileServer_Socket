@@ -118,6 +118,7 @@ LRESULT registerDlg::SockMsg(WPARAM wParam, LPARAM lParam)
 
 		UpdateData(FALSE);
 		break;
+
 	}
 	return 0;
 }

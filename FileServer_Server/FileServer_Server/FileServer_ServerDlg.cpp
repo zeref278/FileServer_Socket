@@ -7,12 +7,14 @@
 #include "FileServer_Server.h"
 #include "FileServer_ServerDlg.h"
 #include "afxdialogex.h"
+#include "stdafx.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
 #endif
 
 std::string file_name;
+int iPort = 10000;
 using namespace std;
 // CAboutDlg dialog used for App About
 
@@ -50,7 +52,7 @@ END_MESSAGE_MAP()
 // CFileServerServerDlg dialog
 
 
-string getFilePath(string s);
+
 CFileServerServerDlg::CFileServerServerDlg(CWnd* pParent /*=nullptr*/)
 	: CDialogEx(IDD_FILESERVER_SERVER_DIALOG, pParent)
 	, m_msgString(_T(""))
@@ -322,7 +324,7 @@ LRESULT CFileServerServerDlg::SockMsg(WPARAM wParam, LPARAM lParam)
 		{
 		case 1://Login
 		{
-
+	
 			CString User, Pass;
 			Parse(strResult[1], User, Pass);
 			int flag1 = 0;
@@ -338,7 +340,7 @@ LRESULT CFileServerServerDlg::SockMsg(WPARAM wParam, LPARAM lParam)
 					}
 				}
 			}
-			if (CheckAccountExist(User, Pass) == true && flag1 == 0)
+			if (CheckAccountExist(User, Pass)==true && flag1 == 0)
 			{
 				strcpy(pSock[numberSocket].Name, ConvertToChar(User));
 				Command = _T("1\r\n1\r\n");
@@ -351,7 +353,7 @@ LRESULT CFileServerServerDlg::SockMsg(WPARAM wParam, LPARAM lParam)
 			{
 				Command = _T("1\r\n0\r\n");
 			}
-
+			
 			mSend(wParam, Command);
 			UpdateData(FALSE);
 			if (CheckAccountExist(User, Pass) == true && flag1 == 0)
@@ -360,6 +362,7 @@ LRESULT CFileServerServerDlg::SockMsg(WPARAM wParam, LPARAM lParam)
 
 				for (int i = 0; i < numberSocket - 1; i++)
 				{
+
 					mSend(pSock[i].sockClient, log);
 
 				}
@@ -381,7 +384,7 @@ LRESULT CFileServerServerDlg::SockMsg(WPARAM wParam, LPARAM lParam)
 				m_msgString += User + _T(" register succesfully\r\n");
 				UpdateAccount(User, Pass);
 			}
-
+			
 			mSend(wParam, Command);
 			UpdateData(FALSE);
 			break;
@@ -423,10 +426,8 @@ LRESULT CFileServerServerDlg::SockMsg(WPARAM wParam, LPARAM lParam)
 			UpdateData(FALSE);
 			break;*/
 		}
-		case 4: //clients download file
+		case 4: //download file
 		{
-			MessageBox(_T(" Request download: "));
-			// find socket which sent mess
 			int post = -1;
 			for (int i = 0; i < numberSocket; i++)
 			{
@@ -436,8 +437,7 @@ LRESULT CFileServerServerDlg::SockMsg(WPARAM wParam, LPARAM lParam)
 						post = i;
 				}
 			}
-			// Parse strResult[1] to username and pass;
-
+			
 			iPort++;
 			string s_port = to_string(iPort);
 			CString cs_port(s_port.c_str());
@@ -470,12 +470,13 @@ LRESULT CFileServerServerDlg::SockMsg(WPARAM wParam, LPARAM lParam)
 			break;
 		}
 		case 6: //clients upload file
-
+		{
 			char* c_port = ConvertToChar(strResult[1]);
 			int iPort = atoi(c_port);
 			CString cs_port(c_port);
 			if (receiveFile(downloadFileName, iPort))
-			break;
+				break;
+		}
 		}
 		break;
 	}
@@ -631,7 +632,15 @@ void CFileServerServerDlg::OnBnClickedRemove()
 
 UINT CFileServerServerDlg::sendFile(LPVOID pParam)
 {
+	/*if (!AfxWiznInit(::GetModuleHandle(NULL), NULL, ::GetCommandLine(), 0))
 	{
+		// TODO: change error code to suit your needs
+		_tprintf(_T("Fatal Error: MFC initialization failed\n"));
+	}
+	else*/
+	{
+		// TODO: code your application's behavior here.
+
 		// Khoi tao thu vien Socket
 		if (AfxSocketInit() == FALSE)
 		{
@@ -641,7 +650,7 @@ UINT CFileServerServerDlg::sendFile(LPVOID pParam)
 
 		CSocket ServerSocket; //cha
 	
-		if (ServerSocket.Create(PORT, SOCK_STREAM, NULL) == 0) //SOCK_STREAM or SOCK_DGRAM.
+		if (ServerSocket.Create(iPort, SOCK_STREAM, NULL) == 0) //SOCK_STREAM or SOCK_DGRAM.
 		{
 
 			return FALSE;
@@ -725,6 +734,25 @@ UINT CFileServerServerDlg::sendFile(LPVOID pParam)
 	return 1;
 }
 
+string getFilePath(string s)
+{
+	ifstream fi;
+	fi.open("filePath.txt");
+	if (fi)
+	{
+		while (!fi.eof())
+		{
+			string line = "";
+			getline(fi, line);
+			if (line.find(s) != string::npos)
+				return line;
+
+		}
+		fi.close();
+	}
+	return "";
+}
+
 bool CFileServerServerDlg::receiveFile(char*, int)
 {
 	UpdateData(TRUE);
@@ -743,21 +771,21 @@ bool CFileServerServerDlg::receiveFile(char*, int)
 	return 1;
 }
 
-string getFilePath(string s)
+string getFileName(string s)
 {
-	ifstream fi;
-	fi.open("filePath.txt");
-	if (fi)
+	string res = "";
+	for (int i = s.size() - 1; i >= 0; i--)
 	{
-		while (!fi.eof())
-		{
-			string line = "";
-			getline(fi, line);
-			if (line.find(s) != string::npos)
-				return line;
-		}
-		fi.close();
+		if (s[i] == '\\') break;
+		res = s[i] + res;
 	}
-	return "";
+	return res;
 }
 
+
+//void CFileServerServerDlg::OnLvnItemchangedFile(NMHDR* pNMHDR, LRESULT* pResult)
+//{
+//	LPNMLISTVIEW pNMLV = reinterpret_cast<LPNMLISTVIEW>(pNMHDR);
+//	// TODO: Add your control notification handler code here
+//	*pResult = 0;
+//}
