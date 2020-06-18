@@ -34,6 +34,7 @@ public:
 	bool receiveFile(char* file_name, int port);
 	int	buffLength;
 	char* downloadFileName;
+	CString fileName;
 	CString Command;
 	CString strResult[2];
 	CListCtrl ListFile_Client;
@@ -45,6 +46,6 @@ public:
 	afx_msg void OnBnClickedButtonLogout();
 
 	void Refresh();
-	UINT sendFile(LPVOID pParam);
+	static UINT sendFile(LPVOID pParam);
 	CString m_log;
 };

@@ -25,12 +25,9 @@ main::main(SOCKET &s, CString name , CWnd* pParent /*=nullptr*/)
 
 	m_msgString = _T("You are logging in as username: ") + name;
 	
-	ListView_SetExtendedListViewStyle
-	(ListFile_Client.m_hWnd, LVS_EX_CHECKBOXES | LVS_EX_FULLROWSELECT);
+
 	Command = _T("5\r\n");
-	mSend(Command); //Gửi socketMsg yêu cầu Refresh 
-	
-	
+	mSend(Command);
 }
 
 main::~main()
@@ -49,6 +46,8 @@ void main::DoDataExchange(CDataExchange* pDX)
 	DDX_Text(pDX, IDC_LOG, m_log);
 
 	WSAAsyncSelect(sClient, m_hWnd, WM_SOCKET, FD_READ | FD_CLOSE);
+	ListView_SetExtendedListViewStyle
+	(ListFile_Client.m_hWnd, LVS_EX_CHECKBOXES | LVS_EX_FULLROWSELECT);
 }
 
 
@@ -130,7 +129,6 @@ LRESULT main::SockMsg(WPARAM wParam, LPARAM lParam)
 		CString temp;
 		if (mRecv(temp) < 0)
 			break;
-
 		Split(temp, strResult);
 		int flag1 = _ttoi(strResult[0]);
 
@@ -143,7 +141,8 @@ LRESULT main::SockMsg(WPARAM wParam, LPARAM lParam)
 			break;
 		}
 		case 4: //receive file from server
-		{	//char* fileName = ConvertToChar(strResult[1]);
+		{	
+			MessageBox(fileName);
 			char* c_port = ConvertToChar(strResult[1]);
 			int iPort = atoi(c_port);
 			CString cs_port(c_port);
@@ -153,12 +152,19 @@ LRESULT main::SockMsg(WPARAM wParam, LPARAM lParam)
 
 			break; 
 		}		
+		case 5: //Call refresh
+		{
+			Refresh();
+			break;
+		}
+		case 6:	// Send file to server 
+		{
+			break;
+		}
 		case 9:
 		{
 			m_log += strResult[1];
-			
 			UpdateData(FALSE);
-
 			break;
 		}
 		}
@@ -167,16 +173,9 @@ LRESULT main::SockMsg(WPARAM wParam, LPARAM lParam)
 	return 0;
 }
 
-
 bool main::receiveFile(char* file_name, int port)
 {
-	/*if (!AfxWinInit(::GetModuleHandle(NULL), NULL, ::GetCommandLine(), 0))
-	{
-		// TODO: change error code to suit your needs
-		_tprintf(_T("Fatal Error: MFC initialization failed\n"));
-
-	}
-	else*/
+	
 	{
 		// TODO: code your application's behavior here.
 
@@ -243,7 +242,8 @@ bool main::receiveFile(char* file_name, int port)
 		}
 		else
 		{
-			//cout << "Khong the ket noi den Server !!!" << endl;
+			MessageBox(_T("Không thể kết nối đến server!"));
+			return FALSE;
 		}
 
 		// Dong ket noi
@@ -258,6 +258,9 @@ void main::OnBnClickedButtonUpload()
 	CFileDialog t(true);
 	if (t.DoModal() == IDOK)
 	{
+		ListFile_Client.InsertItem(0, t.GetFileName());
+		Command = _T("6\r\n") + t.GetFileName() + _T("\r\n");
+		mSend(Command);
 		//gửi thông điệp + IP client
 		//tạo socket
 		//gửi file 
@@ -269,16 +272,17 @@ void main::OnBnClickedButtonDownload()
 	// TODO: Add your control notification handler code here
 	for (int nItem = 0; nItem < ListFile_Client.GetItemCount(); nItem++)
 	{
-		if (ListFile_Client.GetItemState(nItem, LVIS_SELECTED) == LVIS_SELECTED)
+		
+		if (ListFile_Client.GetCheck(nItem))
 		{
-			CString fileName = ListFile_Client.GetItemText(nItem, 0);
+			fileName = ListFile_Client.GetItemText(nItem, 0);
 			CString cs = _T("You have downloaded file: ");
 			downloadFileName = ConvertToChar(fileName);
 			cs += fileName;
 			Command = _T("4\r\n") + fileName + _T("\r\n");
 			mSend(Command);
 			WSAAsyncSelect(sClient, m_hWnd, WM_SOCKET, FD_READ | FD_CLOSE);
-			//MessageBox(cs);
+			/*MessageBox(cs);*/
 		}
 	}
 }
@@ -288,19 +292,16 @@ void main::OnBnClickedButtonLogout()
 	INT_PTR i = MessageBox(_T("Ban muon logout?"), _T("Confirm"), MB_OKCANCEL);
 	if (i == IDCANCEL) return;
 	closesocket(sClient);
-	EndDialog(1);
-	
+	EndDialog(1);	
 }
 
 void main::Refresh()
 {
-
 	ListFile_Client.DeleteAllItems();
 	Command = _T("5\r\n");
-	mSend(Command); //Gui thong tin username + password ve cho server
-	MessageBox(Command);
+	mSend(Command); //Gửi yêu cầu refresh cho server
 	WSAAsyncSelect(sClient, m_hWnd, WM_SOCKET, FD_READ | FD_CLOSE);
-	//UpdateData(FALSE);
+	UpdateData(FALSE);
 }
 
 UINT main::sendFile(LPVOID pParam)

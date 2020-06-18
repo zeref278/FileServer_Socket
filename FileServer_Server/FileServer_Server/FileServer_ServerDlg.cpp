@@ -50,7 +50,7 @@ END_MESSAGE_MAP()
 // CFileServerServerDlg dialog
 
 
-
+string getFilePath(string s);
 CFileServerServerDlg::CFileServerServerDlg(CWnd* pParent /*=nullptr*/)
 	: CDialogEx(IDD_FILESERVER_SERVER_DIALOG, pParent)
 	, m_msgString(_T(""))
@@ -322,7 +322,7 @@ LRESULT CFileServerServerDlg::SockMsg(WPARAM wParam, LPARAM lParam)
 		{
 		case 1://Login
 		{
-	
+
 			CString User, Pass;
 			Parse(strResult[1], User, Pass);
 			int flag1 = 0;
@@ -338,7 +338,7 @@ LRESULT CFileServerServerDlg::SockMsg(WPARAM wParam, LPARAM lParam)
 					}
 				}
 			}
-			if (CheckAccountExist(User, Pass)==true && flag1 == 0)
+			if (CheckAccountExist(User, Pass) == true && flag1 == 0)
 			{
 				strcpy(pSock[numberSocket].Name, ConvertToChar(User));
 				Command = _T("1\r\n1\r\n");
@@ -351,7 +351,7 @@ LRESULT CFileServerServerDlg::SockMsg(WPARAM wParam, LPARAM lParam)
 			{
 				Command = _T("1\r\n0\r\n");
 			}
-			
+
 			mSend(wParam, Command);
 			UpdateData(FALSE);
 			if (CheckAccountExist(User, Pass) == true && flag1 == 0)
@@ -360,7 +360,6 @@ LRESULT CFileServerServerDlg::SockMsg(WPARAM wParam, LPARAM lParam)
 
 				for (int i = 0; i < numberSocket - 1; i++)
 				{
-
 					mSend(pSock[i].sockClient, log);
 
 				}
@@ -382,7 +381,7 @@ LRESULT CFileServerServerDlg::SockMsg(WPARAM wParam, LPARAM lParam)
 				m_msgString += User + _T(" register succesfully\r\n");
 				UpdateAccount(User, Pass);
 			}
-			
+
 			mSend(wParam, Command);
 			UpdateData(FALSE);
 			break;
@@ -424,23 +423,59 @@ LRESULT CFileServerServerDlg::SockMsg(WPARAM wParam, LPARAM lParam)
 			UpdateData(FALSE);
 			break;*/
 		}
-		case 4: //download file
+		case 4: //clients download file
 		{
+			MessageBox(_T(" Request download: "));
+			// find socket which sent mess
+			int post = -1;
+			for (int i = 0; i < numberSocket; i++)
+			{
+				if (pSock[i].sockClient == wParam)
+				{
+					if (i < numberSocket)
+						post = i;
+				}
+			}
+			// Parse strResult[1] to username and pass;
+
+			iPort++;
+			string s_port = to_string(iPort);
+			CString cs_port(s_port.c_str());
+
+			m_msgString += ((CString)pSock[post].Name + _T(" Request download: ") + strResult[1]);
+			m_msgString += "\r\n";
+
+			UpdateData(FALSE);
+			Command = _T("4\r\n") + cs_port + _T("\r\n");
+			mSend(wParam, Command);
+			char* fileName = ConvertToChar(strResult[1]);
+			string sFileName(fileName);
+			file_name = getFilePath(sFileName);
+			AfxBeginThread(sendFile, 0);
 			break;
 		}
 		case 5: //refresh file
 		{
+			CString demp = listFile.GetItemText(0, 0);
+			Command = _T("3\r\n") + demp + _T("\r\n");
+			mSend(wParam, Command);
 			for (int i = 0; i < listFile.GetItemCount(); i++) {
 				CString demp = listFile.GetItemText(i, 0);
 				Command = _T("3\r\n") + demp + _T("\r\n");
 				mSend(wParam, Command);
-
 			}
 			//CA2T str((to_string(number_Socket)+"- Update\r\n").c_str()) ;
 			//m_msgString += str ;
 			UpdateData(FALSE);
 			break;
 		}
+		case 6: //clients upload file
+
+			char* c_port = ConvertToChar(strResult[1]);
+			int iPort = atoi(c_port);
+			CString cs_port(c_port);
+			if (receiveFile(downloadFileName, iPort))
+			break;
 		}
 		break;
 	}
@@ -596,15 +631,7 @@ void CFileServerServerDlg::OnBnClickedRemove()
 
 UINT CFileServerServerDlg::sendFile(LPVOID pParam)
 {
-	/*if (!AfxWiznInit(::GetModuleHandle(NULL), NULL, ::GetCommandLine(), 0))
 	{
-		// TODO: change error code to suit your needs
-		_tprintf(_T("Fatal Error: MFC initialization failed\n"));
-	}
-	else*/
-	{
-		// TODO: code your application's behavior here.
-
 		// Khoi tao thu vien Socket
 		if (AfxSocketInit() == FALSE)
 		{
@@ -716,10 +743,21 @@ bool CFileServerServerDlg::receiveFile(char*, int)
 	return 1;
 }
 
+string getFilePath(string s)
+{
+	ifstream fi;
+	fi.open("filePath.txt");
+	if (fi)
+	{
+		while (!fi.eof())
+		{
+			string line = "";
+			getline(fi, line);
+			if (line.find(s) != string::npos)
+				return line;
+		}
+		fi.close();
+	}
+	return "";
+}
 
-//void CFileServerServerDlg::OnLvnItemchangedFile(NMHDR* pNMHDR, LRESULT* pResult)
-//{
-//	LPNMLISTVIEW pNMLV = reinterpret_cast<LPNMLISTVIEW>(pNMHDR);
-//	// TODO: Add your control notification handler code here
-//	*pResult = 0;
-//}

@@ -83,7 +83,7 @@ public:
 	
 	afx_msg void OnBnClickedRemove();
 
-	UINT sendFile(LPVOID pParam);
+	static UINT sendFile(LPVOID pParam);
 	
 
 	
@@ -92,4 +92,7 @@ public:
 	char* downloadFileName;
 	bool receiveFile(char*, int);
 };
+
 extern std::string file_name;
+extern int iPort;
+

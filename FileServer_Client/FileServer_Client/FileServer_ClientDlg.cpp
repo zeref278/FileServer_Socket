@@ -241,7 +241,6 @@ LRESULT CFileServerClientDlg::SockMsg(WPARAM wParam, LPARAM lParam)
 		{
 			if (strResult[1] == "1")
 			{
-				
 				main main1(this->sClient, m_msgString);
 				EndDialog(1);
 				main1.DoModal();
