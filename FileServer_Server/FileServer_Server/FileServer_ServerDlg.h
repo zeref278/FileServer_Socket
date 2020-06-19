@@ -15,7 +15,7 @@
 #define PORT 25000
 #define WM_SOCKET WM_USER+1
 #define SEND_BUFFER_SIZE 10000
-#define RECV_BUFFER_SIZE	10000
+#define RECV_BUFFER_SIZE 10000
 using namespace std;
 // CFileServerServerDlg dialog
 class CFileServerServerDlg : public CDialogEx

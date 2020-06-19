@@ -586,7 +586,6 @@ void CFileServerServerDlg::OnBnClickedButtonStart()
 	GetDlgItem(IDC_BUTTON_START)->EnableWindow(FALSE);
 	numberSocket = 0;
 	pSock = new SockName[200];
-
 	m_msgString += (_T("Sever was started\r\n"));
 	UpdateData(0);
 	fstream f("account.txt", ios::app);

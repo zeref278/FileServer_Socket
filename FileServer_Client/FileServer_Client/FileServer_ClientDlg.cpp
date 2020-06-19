@@ -73,6 +73,7 @@ void CAboutDlg::DoDataExchange(CDataExchange* pDX)
 }
 
 BEGIN_MESSAGE_MAP(CFileServerClientDlg, CDialogEx)
+	ON_NOTIFY(IPN_FIELDCHANGED, IDC_IPADDRESS, &CFileServerClientDlg::OnIpnFieldchangedIpaddress)
 	ON_WM_SYSCOMMAND()
 	ON_WM_PAINT()
 	ON_WM_QUERYDRAGICON()
@@ -80,7 +81,7 @@ BEGIN_MESSAGE_MAP(CFileServerClientDlg, CDialogEx)
 	
 	ON_BN_CLICKED(IDC_BUTTON_LOGIN, &CFileServerClientDlg::OnBnClickedButtonLogin)
 	ON_BN_CLICKED(IDC_BUTTON_REGISTER, &CFileServerClientDlg::OnBnClickedButtonRegister)
-	ON_NOTIFY(IPN_FIELDCHANGED, IDC_IPADDRESS, &CFileServerClientDlg::OnIpnFieldchangedIpaddress)
+
 END_MESSAGE_MAP()
 
 
@@ -117,7 +118,7 @@ BOOL CFileServerClientDlg::OnInitDialog()
 
 	// TODO: Add extra initialization here
 	IPADDRESS_IN.SetAddress(127,0,0,1);
-	IP = "127.00.0.1";
+	IP = "127.0.0.1";
 	UpdateData(FALSE);
 	return TRUE;  // return TRUE  unless you set the focus to a control
 }
@@ -272,21 +273,7 @@ void CFileServerClientDlg::OnBnClickedButtonLogin()
 
 	l_username.GetWindowText(_UserName);
 	l_pass.GetWindowText(_PassWord);
-	
-	BYTE IPPart1,
-		IPPart2,
-		IPPart3,
-		IPPart4;
-
-	IPADDRESS_IN.GetAddress(IPPart1, IPPart2, IPPart3, IPPart4);
-	if (IPPart1 != 0 && IPPart2 != 0 && IPPart3 != 0 && IPPart4 != 0)
-	{
-		CString p1((LPCSTR)&IPPart1, sizeof(IPPart1));
-		CString p2((LPCSTR)&IPPart2, sizeof(IPPart2));
-		CString p3((LPCSTR)&IPPart3, sizeof(IPPart3));
-		CString p4((LPCSTR)&IPPart4, sizeof(IPPart4));
-		IP = p1 + CString(".") + p2 + CString(".") + p3 + CString(".") + p4;
-	}
+	IPADDRESS_IN.GetWindowText(IP);
 
 	if (_UserName == "" || _PassWord == "")
 	{
@@ -318,7 +305,6 @@ void CFileServerClientDlg::OnBnClickedButtonLogin()
 			MessageBox(_T("Can not connect to server."), _T("ERROR"), 0);
 		}
 		CopyMemory(&servAdd.sin_addr, host->h_addr_list[0], host->h_length);
-		
 		return;
 	}
 	int err = connect(sClient, (struct sockaddr*)&servAdd, sizeof(servAdd));
